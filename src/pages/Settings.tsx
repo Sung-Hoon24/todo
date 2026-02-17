@@ -1,8 +1,79 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ThemeToggle } from "../components/ThemeToggle";
 
 export const Settings = () => {
-    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+    const STORAGE_KEY = "taskflow_push_enabled";
+
+    const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+    const [pushMessage, setPushMessage] = useState<string>("");
+
+    const permission = useMemo(() => {
+        if (!("Notification" in window)) return "unsupported";
+        return Notification.permission;
+    }, []);
+
+    useEffect(() => {
+        const saved = localStorage.getItem(STORAGE_KEY) === "true";
+
+        if (permission === "denied" || permission === "unsupported") {
+            setNotificationsEnabled(false);
+            localStorage.setItem(STORAGE_KEY, "false");
+            setPushMessage(
+                permission === "unsupported"
+                    ? "This browser does not support notifications."
+                    : "Notifications are blocked in browser settings."
+            );
+            return;
+        }
+
+        setNotificationsEnabled(saved);
+
+        if (saved && permission === "default") {
+            setPushMessage("Permission required. Please allow notifications.");
+        } else {
+            setPushMessage("");
+        }
+    }, [permission]);
+
+    const handleTogglePush = async () => {
+        if (!notificationsEnabled) {
+            if (!("Notification" in window)) {
+                setNotificationsEnabled(false);
+                localStorage.setItem(STORAGE_KEY, "false");
+                setPushMessage("This browser does not support notifications.");
+                return;
+            }
+
+            const result = await Notification.requestPermission();
+
+            if (result === "granted") {
+                setNotificationsEnabled(true);
+                localStorage.setItem(STORAGE_KEY, "true");
+                setPushMessage("");
+            } else {
+                setNotificationsEnabled(false);
+                localStorage.setItem(STORAGE_KEY, "false");
+                setPushMessage("Permission required. Please allow notifications.");
+            }
+            return;
+        }
+
+        setNotificationsEnabled(false);
+        localStorage.setItem(STORAGE_KEY, "false");
+        setPushMessage("");
+    };
+
+    const canTest =
+        "Notification" in window &&
+        Notification.permission === "granted" &&
+        notificationsEnabled;
+
+    const handleTestNotification = () => {
+        if (!canTest) return;
+        new Notification("TaskFlow", {
+            body: "Push notifications are enabled."
+        });
+    };
 
     return (
         <div className="flex flex-col h-full relative">
@@ -38,25 +109,59 @@ export const Settings = () => {
                     <div className="space-y-4">
                         <h2 className="text-xl font-bold dark:text-white">Notifications</h2>
                         <div className="bg-white dark:bg-[#1e293b] rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
-                            <div className="p-4 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
-                                        <span className="material-symbols-outlined">notifications</span>
+                            <div className="p-4 flex flex-col gap-2">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
+                                            <span className="material-symbols-outlined">notifications</span>
+                                        </div>
+                                        <div>
+                                            <p className="font-medium dark:text-white">Push Notifications</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400">Receive alerts for deadlines</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="font-medium dark:text-white">Push Notifications</p>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400">Receive alerts for deadlines</p>
+
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={handleTestNotification}
+                                            disabled={!canTest}
+                                            className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all duration-150 active:scale-95
+                                                ${canTest
+                                                    ? "border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                                    : "border-slate-200/60 dark:border-slate-700/60 text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                                                }`}
+                                        >
+                                            Test
+                                        </button>
+
+                                        <span className="text-xs text-slate-400">
+                                            {!("Notification" in window)
+                                                ? "Unsupported"
+                                                : Notification.permission === "granted"
+                                                    ? "Ready"
+                                                    : Notification.permission === "denied"
+                                                        ? "Blocked"
+                                                        : "Not granted"}
+                                        </span>
+
+                                        <label className="relative inline-flex items-center cursor-pointer transition-transform duration-150 active:scale-95">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only peer"
+                                                checked={notificationsEnabled}
+                                                onChange={handleTogglePush}
+                                            />
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                        </label>
                                     </div>
                                 </div>
-                                <label className="relative inline-flex items-center cursor-pointer transition-transform duration-150 active:scale-95">
-                                    <input
-                                        type="checkbox"
-                                        className="sr-only peer"
-                                        checked={notificationsEnabled}
-                                        onChange={() => setNotificationsEnabled(!notificationsEnabled)}
-                                    />
-                                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                                </label>
+
+                                {pushMessage && (
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                        {pushMessage}
+                                    </p>
+                                )}
                             </div>
                             <div className="p-4 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
