@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js"; // PayPal SDK 컴포넌트 임포트
+import { useTasks } from "../context/TaskContext"; // 프리미엄 상태를 위해 useTasks 임포트
 
 export const Settings = () => {
+    const { isPremium, upgradeToPremium } = useTasks(); // 프리미엄 상태 및 업그레이드 함수 가져오기
     const STORAGE_KEY = "taskflow_push_enabled";
 
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -194,12 +197,67 @@ export const Settings = () => {
                                 <div>
                                     <h3 className="text-lg font-bold dark:text-white">Alex Rivera</h3>
                                     <p className="text-slate-500 dark:text-slate-400">alex.rivera@example.com</p>
-                                    <span className="inline-block mt-1 px-2 py-0.5 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs font-bold rounded">PRO PLAN</span>
+                                    {isPremium ? (
+                                        <span className="inline-block mt-1 px-2 py-0.5 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs font-bold rounded">PRO PLAN</span>
+                                    ) : (
+                                        <span className="inline-block mt-1 px-2 py-0.5 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-xs font-bold rounded">FREE PLAN</span>
+                                    )}
                                 </div>
                             </div>
-                            <button className="w-full py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                                Manage Subscription
-                            </button>
+
+                            {/* 프리미엄이 아닐 때만 PayPal 결제 버튼 표시 */}
+                            {!isPremium && (
+                                <div className="mt-6 mb-6">
+                                    <p className="text-sm font-bold mb-3 dark:text-white text-center">Upgrade to PRO for Unlimited Tasks!</p>
+                                    <PayPalScriptProvider options={{ clientId: "AcDkdW0hjkRgG6-TMmmccxAQZq_GQ0eTUXY2PbvF7me3OjjOvr7s_qK_UCrJ1snDf0Wd8zehzQ_zQK4h", currency: "USD" }}>
+                                        <PayPalButtons
+                                            style={{ layout: "vertical", height: 40 }}
+                                            createOrder={(_data, actions) => {
+                                                return actions.order.create({
+                                                    intent: "CAPTURE",
+                                                    purchase_units: [
+                                                        {
+                                                            amount: {
+                                                                value: "9.99",
+                                                                currency_code: "USD"
+                                                                // @ts-ignore - amount needs currency_code
+                                                            },
+                                                        },
+                                                    ],
+                                                });
+                                            }}
+                                            onApprove={async (_data, actions) => {
+                                                if (actions.order) {
+                                                    const details = await actions.order.capture();
+                                                    console.log("Transaction completed by " + details.payer?.name?.given_name);
+                                                    upgradeToPremium(); // 결제 성공 시 프리미엄 권한 부여
+                                                    alert("축하합니다! 프리미엄 기능이 활성화되었습니다. 이제 무제한으로 할 일을 저장할 수 있습니다.");
+                                                }
+                                            }}
+                                            onError={(err) => {
+                                                console.error("PayPal Checkout onError", err);
+                                                alert("결제 중 오류가 발생했습니다. 다시 시도해 주세요.");
+                                            }}
+                                        />
+                                    </PayPalScriptProvider>
+                                    {/* 테스트를 위한 즉시 업그레이드 버튼 (개발용) */}
+                                    <button
+                                        onClick={() => {
+                                            upgradeToPremium();
+                                            alert("테스트: 프리미엄으로 업그레이드되었습니다.");
+                                        }}
+                                        className="w-full mt-2 py-2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                                    >
+                                        (Admin) Instantly Unlock Premium
+                                    </button>
+                                </div>
+                            )}
+
+                            {isPremium && (
+                                <button className="w-full py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                    Manage Subscription
+                                </button>
+                            )}
                             <button className="w-full mt-3 py-2.5 rounded-lg text-red-600 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">
                                 Log Out
                             </button>
