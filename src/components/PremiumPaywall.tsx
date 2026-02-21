@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { sendRadar } from "../utils/sendRadar";
 
 type Props = {
     // 기존에 props가 있었다면 유지해도 되지만,
@@ -63,6 +64,8 @@ export const PremiumPaywall: React.FC<Props> = (_props) => {
         // 설문 모달 열기
         setSurveyTarget(key);
         setSurveyTitle(title);
+        // 디스코드 레이더 전송 (fire-and-forget)
+        sendRadar(`[FakeDoor] key=${key} title=${title} path=${window.location.pathname} time=${new Date().toISOString()}`);
     };
 
     /* 설문 응답 저장 + 모달 닫기 */
@@ -81,6 +84,8 @@ export const PremiumPaywall: React.FC<Props> = (_props) => {
         // 모달 닫기
         setSurveyTarget(null);
         setSurveyTitle("");
+        // 디스코드 레이더 전송 (fire-and-forget)
+        sendRadar(`[FakeDoor Survey] key=${surveyTarget} answer=${answer} path=${window.location.pathname} time=${new Date().toISOString()}`);
     };
 
     return (

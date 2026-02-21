@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { sendRadar } from "../utils/sendRadar";
 
 /* ──────────────────────────────────────────────
    LandingGate — 첫 진입 시 표시되는 전환 최적화 랜딩 페이지
@@ -7,6 +8,7 @@ import { useNavigate } from "react-router-dom";
    - Phase 5: 외부 트래픽 전환 & CTR 측정용
    - Phase 5.2: EN/KR 언어 토글 + 자동 감지 + localStorage 저장
    - Phase 7: AI-First 카피 + CTA 클릭 CTR 레이더
+   - Phase 8: Discord Webhook 외부 레이더
    ────────────────────────────────────────────── */
 
 /* ── 다국어 텍스트 상수 ── */
@@ -85,6 +87,8 @@ export const LandingGate: React.FC = () => {
         } catch (e) {
             console.error("[LandingGate] CTR 저장 실패:", e);
         }
+        // 디스코드 레이더 전송 (fire-and-forget)
+        sendRadar(`[Landing CTA] lang=${lang} path=${window.location.pathname} time=${new Date().toISOString()}`);
         navigate("/dashboard");
     };
 
