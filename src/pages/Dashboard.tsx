@@ -1,21 +1,16 @@
 import { useState, useRef } from "react";
-import { TaskItem } from "../components/TaskItem";
 import { useTasks } from "../context/TaskContext";
+import { MainTodo } from "../components/MainTodo";
+import { ProgressStats } from "../components/ProgressStats";
+import { PremiumPaywall } from "../components/PremiumPaywall";
 
 export const Dashboard = () => {
-    const { tasks, addTask, toggleTask, deleteTask, updateTask } = useTasks();
+    const { tasks, addTask } = useTasks();
     const [inputValue, setInputValue] = useState("");
     const [activeTab, setActiveTab] = useState<'all' | 'important' | 'completed'>('all');
     const inputRef = useRef<HTMLInputElement>(null);
 
     const remainingTasks = tasks.filter(t => !t.completed).length;
-
-    const dashboardTasks = tasks.filter(task => {
-        if (activeTab === 'all') return true;
-        if (activeTab === 'important') return task.priority === 'high';
-        if (activeTab === 'completed') return task.completed;
-        return true;
-    });
 
     // Dynamic Date
     const today = new Date();
@@ -80,28 +75,10 @@ export const Dashboard = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 pb-32">
-                <div className="w-full max-w-[640px] mx-auto flex flex-col gap-3 mt-4">
-                    {dashboardTasks.map(task => (
-                        <TaskItem
-                            key={task.id}
-                            task={task}
-                            onToggle={toggleTask}
-                            onDelete={deleteTask}
-                            onEdit={(id, newTitle) => updateTask(id, { title: newTitle })}
-                        />
-                    ))}
-
-                    {dashboardTasks.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
-                            <div className="size-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400">
-                                <span className="material-symbols-outlined text-[40px]">spa</span>
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-bold dark:text-white">Your day is clear</h3>
-                                <p className="text-slate-500 dark:text-slate-400 mt-1">Start by adding a task below.</p>
-                            </div>
-                        </div>
-                    )}
+                <div className="w-full max-w-[640px] mx-auto flex flex-col gap-2 mt-4">
+                    <ProgressStats />
+                    <MainTodo filter={activeTab} />
+                    <PremiumPaywall />
                 </div>
             </div>
 
