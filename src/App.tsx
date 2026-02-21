@@ -4,6 +4,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { Settings } from "./pages/Settings";
 import { AllTasks } from "./pages/AllTasks";
 import { Deadline } from "./pages/Deadline";
+import { LandingGate } from "./components/LandingGate";
 
 import { TaskProvider } from "./context/TaskContext";
 
@@ -12,8 +13,11 @@ function App() {
     <TaskProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<MainLayout />}>
-            <Route index element={<Navigate to="/dashboard" replace />} />
+          {/* 랜딩 페이지: MainLayout(사이드바) 없이 풀스크린 */}
+          <Route path="/" element={<LandingGate />} />
+
+          {/* 기존 앱: 사이드바 포함 레이아웃 */}
+          <Route element={<MainLayout />}>
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="all-tasks" element={<AllTasks />} />
             <Route path="deadline" element={<Deadline />} />
