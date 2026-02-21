@@ -6,40 +6,41 @@ import { useNavigate } from "react-router-dom";
    - CTA 클릭 → /dashboard 로 이동
    - Phase 5: 외부 트래픽 전환 & CTR 측정용
    - Phase 5.2: EN/KR 언어 토글 + 자동 감지 + localStorage 저장
+   - Phase 7: AI-First 카피 + CTA 클릭 CTR 레이더
    ────────────────────────────────────────────── */
 
 /* ── 다국어 텍스트 상수 ── */
 const TEXT = {
     ko: {
-        heroTitle1: "미루는 습관을",
-        heroHighlight: "시스템",
-        heroTitle2: "으로 해결하세요.",
-        heroSub1: "의지력에 의존하지 마세요.",
-        heroSub2: "하루를 플레이하게 만드는 완벽한 시스템입니다.",
-        problem1: "오늘도 적어만 놓고 끝내지 못했나요?",
-        problem2: "할 일 목록이 오히려 ",
-        problemBold: "스트레스",
-        problem3: "인가요?",
-        value1: "뇌 빼고 실행만",
-        value2: "게임 같은 성취감",
+        heroTitle1: "당신의 생산성 데이터는",
+        heroHighlight: "분석",
+        heroTitle2: "받아야 합니다.",
+        heroSub1: "추측하지 마세요. 측정하세요.",
+        heroSub2: "하루의 결과를 구조화된 인사이트로 바꾸세요.",
+        problem1: "할 일을 적어놓고 피하고 있진 않나요?",
+        problem2: "동기가 부족한 게 아닙니다. ",
+        problemBold: "피드백",
+        problem3: "이 없는 겁니다.",
+        value1: "AI 기반 생산성 분석",
+        value2: "구조화된 데일리 인사이트",
         value3: "데이터 안전 백업 (추후)",
-        cta: "내 하루 플레이 시작하기 (무료)",
+        cta: "내 하루 분석 시작하기 (무료)",
         footer: "회원가입 없이 바로 시작 · 데이터는 내 기기에만 저장",
     },
     en: {
-        heroTitle1: "Stop procrastinating.",
-        heroHighlight: "System",
-        heroTitle2: "-powered productivity.",
-        heroSub1: "Don't rely on willpower.",
-        heroSub2: "A perfect system that makes your day playable.",
-        problem1: "Another day of writing tasks but never finishing?",
-        problem2: "Is your to-do list more ",
-        problemBold: "stressful",
-        problem3: " than helpful?",
-        value1: "Zero thinking, just do it",
-        value2: "Game-like achievements",
+        heroTitle1: "Your Productivity Data Deserves",
+        heroHighlight: "Analysis",
+        heroTitle2: ".",
+        heroSub1: "Stop guessing. Start measuring.",
+        heroSub2: "Turn your daily output into structured insight.",
+        problem1: "Still writing tasks and avoiding them?",
+        problem2: "You don't lack motivation. You lack ",
+        problemBold: "feedback",
+        problem3: ".",
+        value1: "AI-powered productivity analysis",
+        value2: "Structured daily insights",
         value3: "Secure data backup (coming soon)",
-        cta: "Start playing my day (free)",
+        cta: "Analyze My Day (Free)",
         footer: "No sign-up needed · Data stays on your device only",
     },
 } as const;
@@ -75,8 +76,15 @@ export const LandingGate: React.FC = () => {
         }
     };
 
-    /* CTA 클릭 시 대시보드로 이동 */
+    /* CTA 클릭 시 클릭 카운트 저장 + 대시보드로 이동 */
     const handleCTA = () => {
+        try {
+            // CTR 레이더: 클릭 수 localStorage에 기록
+            const current = parseInt(localStorage.getItem("landing_cta_click") || "0", 10);
+            localStorage.setItem("landing_cta_click", String(current + 1));
+        } catch (e) {
+            console.error("[LandingGate] CTR 저장 실패:", e);
+        }
         navigate("/dashboard");
     };
 
@@ -91,8 +99,8 @@ export const LandingGate: React.FC = () => {
                 <button
                     onClick={() => switchLang("en")}
                     className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${lang === "en"
-                            ? "bg-amber-500 text-zinc-950"
-                            : "text-zinc-400 hover:text-zinc-200"
+                        ? "bg-amber-500 text-zinc-950"
+                        : "text-zinc-400 hover:text-zinc-200"
                         }`}
                 >
                     EN
@@ -100,8 +108,8 @@ export const LandingGate: React.FC = () => {
                 <button
                     onClick={() => switchLang("ko")}
                     className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${lang === "ko"
-                            ? "bg-amber-500 text-zinc-950"
-                            : "text-zinc-400 hover:text-zinc-200"
+                        ? "bg-amber-500 text-zinc-950"
+                        : "text-zinc-400 hover:text-zinc-200"
                         }`}
                 >
                     KR
