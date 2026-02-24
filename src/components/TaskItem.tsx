@@ -1,15 +1,9 @@
 
 import { cn } from "../lib/utils";
 import { Checkbox } from "./ui/Checkbox";
+import type { Task } from "../types/storage";
 
-export interface Task {
-    id: string;
-    title: string;
-    completed: boolean;
-    priority: "low" | "medium" | "high";
-    dueDate?: string;
-    category?: string;
-}
+export type { Task };
 
 interface TaskItemProps {
     task: Task;

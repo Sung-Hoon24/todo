@@ -1,14 +1,21 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import type { Task } from '../components/TaskItem';
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
+import type { Task, StorageSchema } from '../types/storage';
+import { CURRENT_SCHEMA_VERSION } from '../types/storage';
+import { loadStorage, saveStorage } from '../services/storage';
+import { UpgradeModal } from '../components/UpgradeModal';
+import { useI18n } from '../hooks/useI18n';
+
+// ─── Re-export Task for downstream consumers ───────────────────────
+export type { Task };
 
 interface TaskContextType {
     tasks: Task[];
-    isPremium: boolean; // 프리미엄 여부 상태 추가
+    isPremium: boolean;
     addTask: (task: Omit<Task, 'id'>) => void;
     toggleTask: (id: string) => void;
     deleteTask: (id: string) => void;
     updateTask: (id: string, updates: Partial<Task>) => void;
-    upgradeToPremium: () => void; // 무제한 프리미엄 전환 함수 추가
+    upgradeToPremium: () => void;
 }
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -21,84 +28,82 @@ export const useTasks = () => {
     return context;
 };
 
-// Dummy initial data - used only if localStorage is empty
-const INITIAL_TASKS: Task[] = [
-    {
-        id: "1",
-        title: "Prepare project proposal",
-        completed: true,
-        priority: "high",
-        dueDate: "2023-10-25T17:00:00",
-        category: "Work",
-    },
-    {
-        id: "2",
-        title: "Email the design team",
-        completed: false,
-        priority: "medium",
-        category: "Work",
-    },
-    {
-        id: "3",
-        title: "Buy groceries",
-        completed: false,
-        priority: "low",
-        category: "Personal",
-    },
-    {
-        id: "4",
-        title: "Schedule dentist appointment",
-        completed: true,
-        priority: "medium",
-        category: "Health",
-    },
-    {
-        id: "5",
-        title: "Review quarterly goals",
-        completed: false,
-        priority: "low",
-        dueDate: "2023-10-26T10:00:00",
-        category: "Work",
-    },
-    {
-        id: "6",
-        title: "Submit tax documents",
-        completed: false,
-        priority: "high",
-        dueDate: "2023-10-28T09:00:00",
-        category: "Finance",
-    },
-];
-
 const FREE_TASK_LIMIT = 10; // 무료 사용자 할 일 저장 한도
+const MAX_TITLE_LENGTH = 200; // 할 일 제목 최대 길이
 
 export const TaskProvider = ({ children }: { children: ReactNode }) => {
-    // 프리미엄 상태 초기화 (localStorage에서 읽어옴)
-    const [isPremium, setIsPremium] = useState<boolean>(() => {
-        return localStorage.getItem('isPremium') === 'true';
-    });
+    // ── 초기 로드: storage 서비스에서 데이터 + 메타 수신
+    const [storageReady, setStorageReady] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const { t } = useI18n();
 
-    const [tasks, setTasks] = useState<Task[]>(() => {
-        const saved = localStorage.getItem('tasks');
-        if (saved) {
-            try {
-                return JSON.parse(saved);
-            } catch (e) {
-                console.error("Failed to parse tasks from localStorage", e);
-                return INITIAL_TASKS;
-            }
+    const [isPremium, setIsPremium] = useState<boolean>(false);
+    const [tasks, setTasks] = useState<Task[]>([]);
+
+    // 초기화 시 한 번만 loadStorage 호출
+    const initialized = useRef(false);
+    // 외부 탭 변경으로 인한 setState인지 구분 (무한 루프 방지)
+    const externalUpdate = useRef(false);
+
+    useEffect(() => {
+        if (initialized.current) return;
+        initialized.current = true;
+
+        const { data, meta } = loadStorage();
+
+        if (meta.repaired) {
+            console.warn('[storage] 데이터 복구됨 (repaired)');
         }
-        return INITIAL_TASKS;
-    });
+        if (meta.backedUpCorrupt) {
+            console.warn('[storage] 손상 원본 백업 완료');
+        }
+        if (meta.futureVersion) {
+            console.warn('[storage] 앱보다 높은 schemaVersion 감지 — 데이터 보존');
+        }
 
-    useEffect(() => {
-        localStorage.setItem('tasks', JSON.stringify(tasks));
-    }, [tasks]);
+        setTasks(data.tasks);
+        setIsPremium(data.isPremium);
+        setStorageReady(true);
+    }, []);
 
-    // 프리미엄 상태 변경 시 localStorage 동기화
+    // ── 다중 탭 동기화: 다른 탭에서 todo_data 변경 시 state 갱신
     useEffect(() => {
-        localStorage.setItem('isPremium', isPremium.toString());
-    }, [isPremium]);
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key !== 'todo_data') return;
+
+            console.warn('[storage] 외부 탭 변경 감지 — 동기화');
+            const { data } = loadStorage();
+            externalUpdate.current = true;
+            setTasks(data.tasks);
+            setIsPremium(data.isPremium);
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
+
+    // ── 저장: tasks 또는 isPremium 변경 시 storage 서비스로 위임
+    useEffect(() => {
+        if (!storageReady) return; // 초기 로드 전에는 저장하지 않음
+
+        // 외부 탭 동기화로 인한 setState면 저장 스킵 (이미 저장된 데이터)
+        if (externalUpdate.current) {
+            externalUpdate.current = false;
+            return;
+        }
+
+        const schema: StorageSchema = {
+            schemaVersion: CURRENT_SCHEMA_VERSION,
+            tasks,
+            isPremium,
+        };
+        const result = saveStorage(schema);
+
+        if (!result.ok) {
+            console.warn(`[storage] 저장 실패: ${result.reason}`);
+            // TODO(Phase 3): i18n 토스트 알림
+        }
+    }, [tasks, isPremium, storageReady]);
 
     const upgradeToPremium = () => {
         setIsPremium(true);
@@ -106,14 +111,28 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addTask = (newTask: Omit<Task, 'id'>) => {
+        // ── 제목 빈 값 방어
+        const trimmedTitle = newTask.title.trim();
+        if (!trimmedTitle) {
+            alert(t('errors.emptyTitle'));
+            return;
+        }
+
+        // ── 제목 길이 제한
+        if (trimmedTitle.length > MAX_TITLE_LENGTH) {
+            alert(t('errors.titleTooLong', { max: MAX_TITLE_LENGTH }));
+            return;
+        }
+
         // 프리미엄이 아니고 저장 한도에 도달했을 경우 추가 방지
         if (!isPremium && tasks.length >= FREE_TASK_LIMIT) {
-            alert(`무료 버전은 최대 ${FREE_TASK_LIMIT}개까지만 저장할 수 있습니다. 프리미엄으로 업그레이드하고 무제한으로 사용하세요!`);
+            setShowUpgradeModal(true);
             return;
         }
 
         const task: Task = {
             ...newTask,
+            title: trimmedTitle,
             id: Math.random().toString(36).substr(2, 9),
         };
         setTasks((prev) => [task, ...prev]);
@@ -142,6 +161,15 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
             upgradeToPremium
         }}>
             {children}
+            <UpgradeModal
+                open={showUpgradeModal}
+                limit={FREE_TASK_LIMIT}
+                onClose={() => setShowUpgradeModal(false)}
+                onUpgrade={() => {
+                    upgradeToPremium();
+                    setShowUpgradeModal(false);
+                }}
+            />
         </TaskContext.Provider>
     );
 };
