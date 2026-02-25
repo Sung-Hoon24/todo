@@ -3,9 +3,11 @@ import { useTasks } from "../context/TaskContext";
 import { MainTodo } from "../components/MainTodo";
 import { ProgressStats } from "../components/ProgressStats";
 import { PremiumPaywall } from "../components/PremiumPaywall";
+import { useI18n } from "../hooks/useI18n";
 
 export const Dashboard = () => {
     const { tasks, addTask } = useTasks();
+    const { t } = useI18n();
     const [inputValue, setInputValue] = useState("");
     const [activeTab, setActiveTab] = useState<'all' | 'important' | 'completed'>('all');
     const inputRef = useRef<HTMLInputElement>(null);

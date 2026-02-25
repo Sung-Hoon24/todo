@@ -7,7 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Centralized i18n system using `useI18n` hook.
 - Korean dictionary (`src/i18n/ko.ts`) with hierarchical key structure.
+- English dictionary (`src/i18n/en.ts`) skeleton mirroring `ko.ts`.
 - Support for dynamic parameter substitution in translations.
+- i18n Strict Mode for Development: Missing keys now trigger console errors and display `[MISSING: key]` in the UI.
 
 ### Changed
 - Migrated all hardcoded UI strings to i18n keys in the following components:

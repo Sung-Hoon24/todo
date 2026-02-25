@@ -1,33 +1,49 @@
-import { ko } from "../i18n/ko";
+import { ko } from '../i18n/ko';
+import { en } from '../i18n/en';
+import { useState, useCallback, useMemo } from 'react';
 
-// ─── 현재 활성 언어 사전 (MVP: ko 고정, 추후 언어 전환 지원) ───
-const dict: Record<string, string> = ko;
+type Lang = 'ko' | 'en';
+const dictionaries: Record<Lang, Record<string, string>> = { ko, en };
 
 /**
- * i18n 문구 조회 훅.
- *
- * @example
- *   const { t } = useI18n();
- *   t("upgrade.body", { limit: 10 })
- *   // → "무료 버전은 최대 10개까지 저장할 수 있습니다."
+ * useI18n Hook
+ * - 다국어 번역 함수(t)를 제공한다.
+ * - Phase 3-4: 개발 모드(DEV)에서 키 누락 시 엄격하게 검사(Strict Mode).
  */
 export function useI18n() {
-    /**
-     * key에 해당하는 문구를 반환한다.
-     * - 없으면 key 그대로 반환 (개발 중 누락 감지).
-     * - params의 {token}을 실제 값으로 치환한다.
-     */
-    function t(key: string, params?: Record<string, string | number>): string {
-        let text = dict[key] ?? key;
+    // 현재는 'ko'를 기본값으로 사용 (추후 전역 상태나 localStorage 연동 가능)
+    const [lang] = useState<Lang>('ko');
 
-        if (params) {
-            for (const [token, value] of Object.entries(params)) {
-                text = text.replaceAll(`{${token}}`, String(value));
+    const dict = useMemo(() => dictionaries[lang], [lang]);
+
+    /**
+     * t (Translate) 함수
+     * @param key 번역 키 (예: 'common.add')
+     * @param params 치환할 파라미터 객체 (예: { max: 10 })
+     */
+    const t = useCallback((key: string, params?: Record<string, string | number>): string => {
+        let text = dict[key];
+
+        // ── 엄격 모드 (Strict Mode) 체크 ──
+        if (!text) {
+            if (import.meta.env.DEV) {
+                // 개발 모드: 콘솔 에러 출력 및 명시적 미싱 표시
+                console.error(`[I18N_MISSING_KEY] lang=${lang}, key=${key}`);
+                return `[MISSING: ${key}]`;
             }
+            // 프로덕션: 키 그대로 반환 (안전한 fallback)
+            return key;
+        }
+
+        // ── 매개변수 치환 로직 (token substitution) ──
+        if (params) {
+            Object.entries(params).forEach(([k, v]) => {
+                text = text.replace(new RegExp(`{${k}}`, 'g'), String(v));
+            });
         }
 
         return text;
-    }
+    }, [dict, lang]);
 
-    return { t };
+    return { t, lang };
 }
