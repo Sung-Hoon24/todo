@@ -1,6 +1,7 @@
 import React from 'react';
 import { TaskItem } from './TaskItem';
 import { useTasks } from '../context/TaskContext';
+import { useI18n } from '../hooks/useI18n';
 
 interface MainTodoProps {
     filter: 'all' | 'important' | 'completed';
@@ -8,6 +9,7 @@ interface MainTodoProps {
 
 export const MainTodo: React.FC<MainTodoProps> = ({ filter }) => {
     const { tasks, toggleTask, deleteTask, updateTask } = useTasks();
+    const { t } = useI18n();
 
     const dashboardTasks = tasks.filter(task => {
         if (filter === 'all') return true;
@@ -34,8 +36,8 @@ export const MainTodo: React.FC<MainTodoProps> = ({ filter }) => {
                         <span className="material-symbols-outlined text-[40px]">spa</span>
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold dark:text-white">Your day is clear</h3>
-                        <p className="text-slate-500 dark:text-slate-400 mt-1">Start by adding a task below.</p>
+                        <h3 className="text-xl font-bold dark:text-white">{t("empty.title")}</h3>
+                        <p className="text-slate-500 dark:text-slate-400 mt-1">{t("empty.desc")}</p>
                     </div>
                 </div>
             )}

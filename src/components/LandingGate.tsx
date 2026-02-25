@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { sendRadar } from "../utils/sendRadar";
+import { useI18n } from "../hooks/useI18n";
 
 /* ──────────────────────────────────────────────
    LandingGate — 첫 진입 시 표시되는 전환 최적화 랜딩 페이지
@@ -10,42 +11,6 @@ import { sendRadar } from "../utils/sendRadar";
    - Phase 7: AI-First 카피 + CTA 클릭 CTR 레이더
    - Phase 8: Discord Webhook 외부 레이더
    ────────────────────────────────────────────── */
-
-/* ── 다국어 텍스트 상수 ── */
-const TEXT = {
-    ko: {
-        heroTitle1: "당신의 생산성 데이터는",
-        heroHighlight: "분석",
-        heroTitle2: "받아야 합니다.",
-        heroSub1: "추측하지 마세요. 측정하세요.",
-        heroSub2: "하루의 결과를 구조화된 인사이트로 바꾸세요.",
-        problem1: "할 일을 적어놓고 피하고 있진 않나요?",
-        problem2: "동기가 부족한 게 아닙니다. ",
-        problemBold: "피드백",
-        problem3: "이 없는 겁니다.",
-        value1: "AI 기반 생산성 분석",
-        value2: "구조화된 데일리 인사이트",
-        value3: "데이터 안전 백업 (추후)",
-        cta: "내 하루 분석 시작하기 (무료)",
-        footer: "회원가입 없이 바로 시작 · 데이터는 내 기기에만 저장",
-    },
-    en: {
-        heroTitle1: "Your Productivity Data Deserves",
-        heroHighlight: "Analysis",
-        heroTitle2: ".",
-        heroSub1: "Stop guessing. Start measuring.",
-        heroSub2: "Turn your daily output into structured insight.",
-        problem1: "Still writing tasks and avoiding them?",
-        problem2: "You don't lack motivation. You lack ",
-        problemBold: "feedback",
-        problem3: ".",
-        value1: "AI-powered productivity analysis",
-        value2: "Structured daily insights",
-        value3: "Secure data backup (coming soon)",
-        cta: "Analyze My Day (Free)",
-        footer: "No sign-up needed · Data stays on your device only",
-    },
-} as const;
 
 /* 언어 타입 */
 type Lang = "en" | "ko";
@@ -67,6 +32,7 @@ function detectLang(): Lang {
 export const LandingGate: React.FC = () => {
     const navigate = useNavigate();
     const [lang, setLang] = useState<Lang>(detectLang);
+    const { t } = useI18n();
 
     /* 언어 변경 핸들러 — localStorage에도 저장 */
     const switchLang = (newLang: Lang) => {
@@ -91,9 +57,6 @@ export const LandingGate: React.FC = () => {
         sendRadar(`[Landing CTA] lang=${lang} path=${window.location.pathname} time=${new Date().toISOString()}`);
         navigate("/dashboard");
     };
-
-    /* 현재 언어의 텍스트 */
-    const t = TEXT[lang];
 
     return (
         <div className="relative min-h-screen bg-zinc-950 flex flex-col items-center justify-center px-5 py-12 text-center">
@@ -122,28 +85,28 @@ export const LandingGate: React.FC = () => {
 
             {/* ── A. Hero 섹션 ── */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-zinc-50 leading-tight max-w-2xl">
-                {t.heroTitle1}<br />
-                <span className="text-amber-400">{t.heroHighlight}</span>{t.heroTitle2}
+                {t("landing.heroTitle1")}<br />
+                <span className="text-amber-400">{t("landing.heroHighlight")}</span>{t("landing.heroTitle2")}
             </h1>
 
             <p className="mt-4 text-base sm:text-lg text-zinc-400 max-w-md">
-                {t.heroSub1}<br />
-                {t.heroSub2}
+                {t("landing.heroSub1")}<br />
+                {t("landing.heroSub2")}
             </p>
 
             {/* ── B. Problem 섹션 ── */}
             <div className="mt-10 w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
                 <p className="text-sm text-zinc-400 leading-relaxed">
-                    {t.problem1}<br />
-                    {t.problem2}<strong className="text-zinc-200">{t.problemBold}</strong>{t.problem3}
+                    {t("landing.problem1")}<br />
+                    {t("landing.problem2")}<strong className="text-zinc-200">{t("landing.problemBold")}</strong>{t("landing.problem3")}
                 </p>
             </div>
 
             {/* ── C. Value 체크리스트 3개 ── */}
             <ul className="mt-8 flex flex-col gap-3 text-left w-full max-w-xs">
-                <ValueItem text={t.value1} />
-                <ValueItem text={t.value2} />
-                <ValueItem text={t.value3} />
+                <ValueItem text={t("landing.value1")} />
+                <ValueItem text={t("landing.value2")} />
+                <ValueItem text={t("landing.value3")} />
             </ul>
 
             {/* ── D. Primary CTA 버튼 ── */}
@@ -151,12 +114,12 @@ export const LandingGate: React.FC = () => {
                 onClick={handleCTA}
                 className="mt-10 w-full max-w-xs rounded-xl bg-amber-500 px-6 py-4 text-base font-bold text-zinc-950 hover:bg-amber-400 active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-zinc-950"
             >
-                {t.cta}
+                {t("landing.cta")}
             </button>
 
             {/* ── 하단 보조 문구 ── */}
             <p className="mt-4 text-xs text-zinc-600">
-                {t.footer}
+                {t("landing.footer")}
             </p>
         </div>
     );

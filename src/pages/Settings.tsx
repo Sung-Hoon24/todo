@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js"; // PayPal SDK 컴포넌트 임포트
 import { useTasks } from "../context/TaskContext"; // 프리미엄 상태를 위해 useTasks 임포트
+import { useI18n } from "../hooks/useI18n";
 
 export const Settings = () => {
     const { isPremium, upgradeToPremium } = useTasks(); // 프리미엄 상태 및 업그레이드 함수 가져오기
+    const { t } = useI18n();
     const STORAGE_KEY = "taskflow_push_enabled";
 
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -23,8 +25,8 @@ export const Settings = () => {
             localStorage.setItem(STORAGE_KEY, "false");
             setPushMessage(
                 permission === "unsupported"
-                    ? "This browser does not support notifications."
-                    : "Notifications are blocked in browser settings."
+                    ? t("settings.pushMsg.unsupported")
+                    : t("settings.pushMsg.blocked")
             );
             return;
         }
@@ -32,18 +34,18 @@ export const Settings = () => {
         setNotificationsEnabled(saved);
 
         if (saved && permission === "default") {
-            setPushMessage("Permission required. Please allow notifications.");
+            setPushMessage(t("settings.pushMsg.required"));
         } else {
             setPushMessage("");
         }
-    }, [permission]);
+    }, [permission, t]);
 
     const handleTogglePush = async () => {
         if (!notificationsEnabled) {
             if (!("Notification" in window)) {
                 setNotificationsEnabled(false);
                 localStorage.setItem(STORAGE_KEY, "false");
-                setPushMessage("This browser does not support notifications.");
+                setPushMessage(t("settings.pushMsg.unsupported"));
                 return;
             }
 
@@ -56,7 +58,7 @@ export const Settings = () => {
             } else {
                 setNotificationsEnabled(false);
                 localStorage.setItem(STORAGE_KEY, "false");
-                setPushMessage("Permission required. Please allow notifications.");
+                setPushMessage(t("settings.pushMsg.required"));
             }
             return;
         }
@@ -74,7 +76,7 @@ export const Settings = () => {
     const handleTestNotification = () => {
         if (!canTest) return;
         new Notification("TaskFlow", {
-            body: "Push notifications are enabled."
+            body: t("settings.pushMsg.enabled")
         });
     };
 
@@ -83,7 +85,7 @@ export const Settings = () => {
             <div className="sticky top-0 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur z-10 px-4 pt-8 pb-4 border-b border-white/0">
                 <div className="w-full max-w-[640px] mx-auto flex flex-col gap-6">
                     <div className="flex items-center justify-between">
-                        <h1 className="text-3xl font-black tracking-tight dark:text-white">Settings</h1>
+                        <h1 className="text-3xl font-black tracking-tight dark:text-white">{t("settings.title")}</h1>
                     </div>
                 </div>
             </div>
@@ -93,15 +95,15 @@ export const Settings = () => {
 
                     {/* Appearance Section */}
                     <div className="space-y-4">
-                        <h2 className="text-xl font-bold dark:text-white">Appearance</h2>
+                        <h2 className="text-xl font-bold dark:text-white">{t("settings.appearance")}</h2>
                         <div className="bg-white dark:bg-[#1e293b] rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
                                     <span className="material-symbols-outlined">dark_mode</span>
                                 </div>
                                 <div>
-                                    <p className="font-medium dark:text-white">Theme</p>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">Customize your interface theme</p>
+                                    <p className="font-medium dark:text-white">{t("settings.theme")}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{t("settings.themeDesc")}</p>
                                 </div>
                             </div>
                             <ThemeToggle />
@@ -110,7 +112,7 @@ export const Settings = () => {
 
                     {/* Notifications Section */}
                     <div className="space-y-4">
-                        <h2 className="text-xl font-bold dark:text-white">Notifications</h2>
+                        <h2 className="text-xl font-bold dark:text-white">{t("settings.notifications")}</h2>
                         <div className="bg-white dark:bg-[#1e293b] rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
                             <div className="p-4 flex flex-col gap-2">
                                 <div className="flex items-center justify-between">
@@ -119,8 +121,8 @@ export const Settings = () => {
                                             <span className="material-symbols-outlined">notifications</span>
                                         </div>
                                         <div>
-                                            <p className="font-medium dark:text-white">Push Notifications</p>
-                                            <p className="text-sm text-slate-500 dark:text-slate-400">Receive alerts for deadlines</p>
+                                            <p className="font-medium dark:text-white">{t("settings.push")}</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400">{t("settings.pushDesc")}</p>
                                         </div>
                                     </div>
 
@@ -135,17 +137,17 @@ export const Settings = () => {
                                                     : "border-slate-200/60 dark:border-slate-700/60 text-slate-400 dark:text-slate-500 cursor-not-allowed"
                                                 }`}
                                         >
-                                            Test
+                                            {t("common.test")}
                                         </button>
 
                                         <span className="text-xs text-slate-400">
                                             {!("Notification" in window)
-                                                ? "Unsupported"
+                                                ? t("settings.pushStatus.unsupported")
                                                 : Notification.permission === "granted"
-                                                    ? "Ready"
+                                                    ? t("settings.pushStatus.ready")
                                                     : Notification.permission === "denied"
-                                                        ? "Blocked"
-                                                        : "Not granted"}
+                                                        ? t("settings.pushStatus.blocked")
+                                                        : t("settings.pushStatus.notGranted")}
                                         </span>
 
                                         <label className="relative inline-flex items-center cursor-pointer transition-transform duration-150 active:scale-95">
@@ -172,8 +174,8 @@ export const Settings = () => {
                                         <span className="material-symbols-outlined">mail</span>
                                     </div>
                                     <div>
-                                        <p className="font-medium dark:text-white">Email Digest</p>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400">Daily summary of tasks</p>
+                                        <p className="font-medium dark:text-white">{t("settings.email")}</p>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">{t("settings.emailDesc")}</p>
                                     </div>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer transition-transform duration-150 active:scale-95">
@@ -186,7 +188,7 @@ export const Settings = () => {
 
                     {/* Account Section */}
                     <div className="space-y-4">
-                        <h2 className="text-xl font-bold dark:text-white">Account</h2>
+                        <h2 className="text-xl font-bold dark:text-white">{t("settings.account")}</h2>
                         <div className="bg-white dark:bg-[#1e293b] rounded-xl border border-slate-200 dark:border-slate-800 p-4">
                             <div className="flex items-center gap-4 mb-4">
                                 <img
@@ -198,9 +200,9 @@ export const Settings = () => {
                                     <h3 className="text-lg font-bold dark:text-white">Alex Rivera</h3>
                                     <p className="text-slate-500 dark:text-slate-400">alex.rivera@example.com</p>
                                     {isPremium ? (
-                                        <span className="inline-block mt-1 px-2 py-0.5 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs font-bold rounded">PRO PLAN</span>
+                                        <span className="inline-block mt-1 px-2 py-0.5 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs font-bold rounded">{t("settings.plan.pro")}</span>
                                     ) : (
-                                        <span className="inline-block mt-1 px-2 py-0.5 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-xs font-bold rounded">FREE PLAN</span>
+                                        <span className="inline-block mt-1 px-2 py-0.5 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-xs font-bold rounded">{t("settings.plan.free")}</span>
                                     )}
                                 </div>
                             </div>
@@ -208,7 +210,7 @@ export const Settings = () => {
                             {/* 프리미엄이 아닐 때만 PayPal 결제 버튼 표시 */}
                             {!isPremium && (
                                 <div className="mt-6 mb-6">
-                                    <p className="text-sm font-bold mb-3 dark:text-white text-center">Upgrade to PRO for Unlimited Tasks!</p>
+                                    <p className="text-sm font-bold mb-3 dark:text-white text-center">{t("settings.upgradeText")}</p>
                                     <PayPalScriptProvider options={{ clientId: "AcDkdW0hjkRgG6-TMmmccxAQZq_GQ0eTUXY2PbvF7me3OjjOvr7s_qK_UCrJ1snDf0Wd8zehzQ_zQK4h", currency: "USD" }}>
                                         <PayPalButtons
                                             style={{ layout: "vertical", height: 40 }}
@@ -231,12 +233,12 @@ export const Settings = () => {
                                                     const details = await actions.order.capture();
                                                     console.log("Transaction completed by " + details.payer?.name?.given_name);
                                                     upgradeToPremium(); // 결제 성공 시 프리미엄 권한 부여
-                                                    alert("축하합니다! 프리미엄 기능이 활성화되었습니다. 이제 무제한으로 할 일을 저장할 수 있습니다.");
+                                                    alert(t("settings.upgradeSuccess"));
                                                 }
                                             }}
                                             onError={(err) => {
                                                 console.error("PayPal Checkout onError", err);
-                                                alert("결제 중 오류가 발생했습니다. 다시 시도해 주세요.");
+                                                alert(t("errors.paymentFailed"));
                                             }}
                                         />
                                     </PayPalScriptProvider>
@@ -244,22 +246,22 @@ export const Settings = () => {
                                     <button
                                         onClick={() => {
                                             upgradeToPremium();
-                                            alert("테스트: 프리미엄으로 업그레이드되었습니다.");
+                                            alert(t("settings.upgradeSuccess"));
                                         }}
                                         className="w-full mt-2 py-2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                                     >
-                                        (Admin) Instantly Unlock Premium
+                                        {t("settings.adminUnlock")}
                                     </button>
                                 </div>
                             )}
 
                             {isPremium && (
                                 <button className="w-full py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                                    Manage Subscription
+                                    {t("settings.manageSub")}
                                 </button>
                             )}
                             <button className="w-full mt-3 py-2.5 rounded-lg text-red-600 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">
-                                Log Out
+                                {t("common.logout")}
                             </button>
                         </div>
                         <div className="text-center text-xs text-slate-400 pb-8">

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { sendRadar } from "../utils/sendRadar";
+import { useI18n } from "../hooks/useI18n";
 
 type Props = {
     // 기존에 props가 있었다면 유지해도 되지만,
@@ -11,35 +12,38 @@ type Props = {
    - 3가지 가설을 카드로 표시하고 클릭 시 설문 모달을 띄운다.
    - 설문 결과는 localStorage에 저장한다.
    ────────────────────────────────────────────── */
-const FAKE_DOOR_HYPOTHESES = [
-    {
-        key: "fakeDoor_pet",           // localStorage 키
-        icon: "🐣",
-        title: "펫 키우기 & 한정판 스킨",
-        desc: "할 일을 완료하며 귀여운 펫을 성장시키세요!",
-    },
-    {
-        key: "fakeDoor_ai",
-        icon: "🤖",
-        title: "AI 딥 리포트",
-        desc: "나만의 생산성 패턴을 AI가 분석해 드려요.",
-    },
-    {
-        key: "fakeDoor_trainer",
-        icon: "🧨",
-        title: "독한 트레이너 모드",
-        desc: "미루기 방지! 강력한 알림과 동기부여.",
-    },
-] as const;
-
-/* 설문 선택지 3개 (결제 의향 확인) */
-const SURVEY_OPTIONS = [
-    { label: "네, 결제할 의향 있어요!", value: "yes" },
-    { label: "고민해볼게요 🤔", value: "maybe" },
-    { label: "아니요, 괜찮아요", value: "no" },
-] as const;
 
 export const PremiumPaywall: React.FC<Props> = (_props) => {
+    const { t } = useI18n();
+
+    const FAKE_DOOR_HYPOTHESES = [
+        {
+            key: "fakeDoor_pet",           // localStorage 키
+            icon: "🐣",
+            title: t("paywall.lab.pet.title"),
+            desc: t("paywall.lab.pet.desc"),
+        },
+        {
+            key: "fakeDoor_ai",
+            icon: "🤖",
+            title: t("paywall.lab.ai.title"),
+            desc: t("paywall.lab.ai.desc"),
+        },
+        {
+            key: "fakeDoor_trainer",
+            icon: "🧨",
+            title: t("paywall.lab.trainer.title"),
+            desc: t("paywall.lab.trainer.desc"),
+        },
+    ] as const;
+
+    /* 설문 선택지 3개 (결제 의향 확인) */
+    const SURVEY_OPTIONS = [
+        { label: t("paywall.survey.yes"), value: "yes" },
+        { label: t("paywall.survey.maybe"), value: "maybe" },
+        { label: t("paywall.survey.no"), value: "no" },
+    ] as const;
+
     /* 설문 모달 상태 관리 */
     const [surveyTarget, setSurveyTarget] = useState<string | null>(null);
     const [surveyTitle, setSurveyTitle] = useState("");
@@ -95,12 +99,12 @@ export const PremiumPaywall: React.FC<Props> = (_props) => {
                 <div className="flex items-start justify-between gap-3">
                     <div>
                         <h3 className="text-lg sm:text-xl font-semibold text-zinc-50">
-                            프리미엄으로 더 귀엽고 더 강력하게 ✨
+                            {t("paywall.headline")}
                         </h3>
 
                         {/* B. 서브카피 */}
                         <p className="mt-1 text-sm text-zinc-400">
-                            주간 리포트 + 꾸미기 + 백업으로, "꾸준함"이 덜 힘들어집니다.
+                            {t("paywall.subcopy")}
                         </p>
                     </div>
 
@@ -118,15 +122,19 @@ export const PremiumPaywall: React.FC<Props> = (_props) => {
                 <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <BenefitCard
                         icon="📊"
-                        title="주간 리포트"
-                        desc="완료율과 패턴을 한눈에 확인"
+                        title={t("paywall.benefit.report.title")}
+                        desc={t("paywall.benefit.report.desc")}
                     />
                     <BenefitCard
                         icon="🎀"
-                        title="꾸미기"
-                        desc="감성 테마와 스티커팩 미리보기"
+                        title={t("paywall.benefit.theme.title")}
+                        desc={t("paywall.benefit.theme.desc")}
                     />
-                    <BenefitCard icon="☁️" title="백업" desc="기기 바꿔도 안전하게 보관" />
+                    <BenefitCard
+                        icon="☁️"
+                        title={t("paywall.benefit.backup.title")}
+                        desc={t("paywall.benefit.backup.desc")}
+                    />
                 </div>
 
                 {/* ═══════════════════════════════════════════
@@ -135,7 +143,7 @@ export const PremiumPaywall: React.FC<Props> = (_props) => {
                    ═══════════════════════════════════════════ */}
                 <div className="mt-6">
                     <p className="text-xs text-zinc-500 mb-3">
-                        🧪 어떤 기능이 가장 기대되나요? 관심 있는 카드를 눌러주세요!
+                        {t("paywall.lab.desc")}
                     </p>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                         {FAKE_DOOR_HYPOTHESES.map((h) => (
@@ -152,7 +160,7 @@ export const PremiumPaywall: React.FC<Props> = (_props) => {
                                 </div>
                                 <p className="mt-2 text-sm text-zinc-400">{h.desc}</p>
                                 <div className="mt-3 text-xs text-amber-500/70">
-                                    관심 있으면 터치! 👆
+                                    {t("paywall.lab.cta")}
                                 </div>
                             </button>
                         ))}
@@ -163,13 +171,13 @@ export const PremiumPaywall: React.FC<Props> = (_props) => {
                 <div className="mt-5 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
                     <div className="flex flex-wrap items-end justify-between gap-3">
                         <div>
-                            <div className="text-sm text-zinc-400">프리미엄 플랜</div>
+                            <div className="text-sm text-zinc-400">{t("paywall.plan.title")}</div>
                             <div className="mt-1 flex items-baseline gap-2">
-                                <span className="text-2xl font-bold text-zinc-50">$5</span>
-                                <span className="text-sm text-zinc-400">/ month</span>
+                                <span className="text-2xl font-bold text-zinc-50">{t("paywall.plan.price")}</span>
+                                <span className="text-sm text-zinc-400">{t("paywall.plan.period")}</span>
                             </div>
                             <div className="mt-1 text-xs text-zinc-500">
-                                언제든 해지 가능 · 다음 단계에서 결제 연결
+                                {t("paywall.plan.note")}
                             </div>
                         </div>
 
@@ -179,14 +187,14 @@ export const PremiumPaywall: React.FC<Props> = (_props) => {
                                 onClick={handlePrimary}
                                 className="w-full rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-amber-400 active:bg-amber-500 sm:w-auto"
                             >
-                                프리미엄 시작하기
+                                {t("paywall.cta.primary")}
                             </button>
 
                             <button
                                 onClick={handleSecondary}
                                 className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm font-medium text-zinc-200 hover:bg-zinc-900 sm:w-auto"
                             >
-                                나중에 할게요
+                                {t("paywall.cta.secondary")}
                             </button>
                         </div>
                     </div>
@@ -194,8 +202,8 @@ export const PremiumPaywall: React.FC<Props> = (_props) => {
 
                 {/* F. 신뢰 요소 2개 */}
                 <div className="mt-4 flex flex-wrap gap-2 text-xs text-zinc-500">
-                    <TrustPill text="🔐 안전한 결제 환경" />
-                    <TrustPill text="🧾 결제 전환은 다음 단계에서" />
+                    <TrustPill text={t("paywall.trust.secure")} />
+                    <TrustPill text={t("paywall.trust.next")} />
                 </div>
             </div>
 
@@ -208,11 +216,10 @@ export const PremiumPaywall: React.FC<Props> = (_props) => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
                     <div className="w-full max-w-sm rounded-2xl border border-zinc-700 bg-zinc-900 p-6 shadow-xl">
                         <h4 className="text-base font-semibold text-zinc-50 mb-2">
-                            💬 잠깐! 의견을 들려주세요
+                            {t("paywall.survey.title")}
                         </h4>
                         <p className="text-sm text-zinc-400 mb-5">
-                            <strong className="text-amber-400">{surveyTitle}</strong> 기능이 있다면
-                            <br />월 $5 결제 의향이 있으신가요?
+                            <strong className="text-amber-400">{surveyTitle}</strong> {t("paywall.survey.body", { target: "" }).replace("  ", " ")}
                         </p>
 
                         <div className="flex flex-col gap-2">
@@ -232,7 +239,7 @@ export const PremiumPaywall: React.FC<Props> = (_props) => {
                             onClick={() => { setSurveyTarget(null); setSurveyTitle(""); }}
                             className="mt-4 w-full text-center text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
                         >
-                            닫기
+                            {t("common.close")}
                         </button>
                     </div>
                 </div>
@@ -244,6 +251,7 @@ export const PremiumPaywall: React.FC<Props> = (_props) => {
 /* ── 하위 컴포넌트 (기존 유지) ── */
 
 function BenefitCard(props: { icon: string; title: string; desc: string }) {
+    const { t } = useI18n();
     return (
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
             <div className="flex items-center gap-2">
@@ -252,7 +260,7 @@ function BenefitCard(props: { icon: string; title: string; desc: string }) {
             </div>
             <p className="mt-2 text-sm text-zinc-400">{props.desc}</p>
             <div className="mt-3 text-xs text-zinc-600">
-                미리보기만 제공됩니다
+                {t("paywall.previewOnly")}
             </div>
         </div>
     );

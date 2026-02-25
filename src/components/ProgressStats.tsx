@@ -1,8 +1,11 @@
 import React from 'react';
 import { useTasks } from '../context/TaskContext';
+import { useI18n } from '../hooks/useI18n';
 
 export const ProgressStats: React.FC = () => {
     const { tasks } = useTasks();
+    const { t } = useI18n();
+
     const totalTasks = tasks.length;
     const completedTasks = tasks.filter(t => t.completed).length;
 
@@ -14,10 +17,10 @@ export const ProgressStats: React.FC = () => {
             <div className="flex justify-between items-end mb-3">
                 <div>
                     <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                        Today's Progress
+                        {t("stats.title")}
                     </h2>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        {completedTasks} of {totalTasks} tasks completed
+                        {t("stats.status", { completed: completedTasks, total: totalTasks })}
                     </p>
                 </div>
                 <div className="text-2xl font-bold text-primary">
@@ -34,7 +37,7 @@ export const ProgressStats: React.FC = () => {
             </div>
             {/* 긍정적 메시지 (Guilt-Free Philosophy) */}
             <div className="mt-3 text-xs text-slate-400 dark:text-slate-500 text-right">
-                {progressPercentage === 100 && totalTasks > 0 ? '🎉 All done for today! Great job!' : 'Every step counts. Keep it up!'}
+                {progressPercentage === 100 && totalTasks > 0 ? t("stats.complete") : t("stats.keepGoing")}
             </div>
         </div>
     );

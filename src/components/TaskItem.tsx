@@ -2,6 +2,7 @@
 import { cn } from "../lib/utils";
 import { Checkbox } from "./ui/Checkbox";
 import type { Task } from "../types/storage";
+import { useI18n } from "../hooks/useI18n";
 
 export type { Task };
 
@@ -13,6 +14,8 @@ interface TaskItemProps {
 }
 
 export const TaskItem = ({ task, onToggle, onDelete, onEdit }: TaskItemProps) => {
+    const { t } = useI18n();
+
     const priorityColors = {
         low: "text-slate-400 bg-slate-400/10",
         medium: "text-amber-500 bg-amber-500/10",
@@ -20,7 +23,7 @@ export const TaskItem = ({ task, onToggle, onDelete, onEdit }: TaskItemProps) =>
     };
 
     const handleEdit = () => {
-        const newTitle = window.prompt("Edit task title:", task.title);
+        const newTitle = window.prompt(t("task.editPrompt"), task.title);
         if (newTitle && newTitle.trim() !== "") {
             onEdit(task.id, newTitle.trim());
         }
@@ -60,7 +63,7 @@ export const TaskItem = ({ task, onToggle, onDelete, onEdit }: TaskItemProps) =>
                             <span className="material-symbols-outlined text-[12px] fill-1">
                                 {priorityIcons[task.priority]}
                             </span>
-                            {task.priority}
+                            {t(`task.priority.${task.priority}`)}
                         </span>
                         {task.dueDate && (
                             <span className="text-xs text-slate-400 flex items-center gap-1">
